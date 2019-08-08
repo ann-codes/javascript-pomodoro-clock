@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Javascript Pomodoro Clock</title>
+    <meta charset="UTF-8" />
+
+    <link
+      href="https://fonts.googleapis.com/css?family=DM+Sans|Sniglet&display=swap"
+      rel="stylesheet"
+    />
+    <link href="styles.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/c8ade313f5.js"></script>
+  </head>
+
+  <body>
+    <section class="container">
+      <h1 class="main-header">Pomodoro Clock</h1>
+
+      <div class="grid">
+        <div class="sessions">
+          <div id="session-decrement">
+            <i class="fas fa-3x fa-angle-double-down"></i>
+          </div>
+          <div id="session-length" class="numbers">25</div>
+          <div id="session-increment">
+            <i class="fas fa-3x fa-angle-double-up"></i>
+          </div>
+          <div id="session-label">Session Length</div>
+        </div>
+
+        <div class="breaks">
+          <div id="break-decrement">
+            <i class="fas fa-3x fa-angle-double-down"></i>
+          </div>
+          <div id="break-length" class="numbers">5</div>
+          <div id="break-increment">
+            <i class="fas fa-3x fa-angle-double-up"></i>
+          </div>
+          <div id="break-label">Break Length</div>
+        </div>
+
+        <div class="timer">
+          <div id="timer-label">
+            Be Productive!
+          </div>
+          <div id="time-left" class="countdown">25:00</div>
+        </div>
+
+        <div class="buttons">
+          <div id="start_stop">
+            <i class="fas fa-3x fa-play-circle"></i>
+            <i class="fas fa-3x fa-pause-circle"></i>
+          </div>
+          <div id="reset"><i class="fas fa-3x fa-redo"></i></div>
+        </div>
+      </div>
+
+      <div id="container"></div>
+    </section>
+
+    <footer class="attributions">
+      <p>
+        Made by
+        <a href="https://github.com/ann-codes" target="_blank">Ann Nguyen</a>
+        for
+        <!--
+        <a href="https://learn.freecodecamp.org/front-end-libraries/front-end-libraries-projects/build-a-pomodoro-clock/" target="_blank">Free Code Camp</a>
+        and -->
+        <a
+          href="https://www.theodinproject.com/courses/web-development-101/lessons/pairing-project"
+          target="_blank"
+          >The Odin Project</a
+        ><br />
+        with
+        <a
+          href="https://kimmobrunfeldt.github.io/progressbar.js/"
+          target="_blank"
+          >ProgressBar.js</a
+        >
+        and <a href="https://fontawesome.com/" target="_blank">Font Awesome</a>.
+      </p>
+    </footer>
+
+    <!-- <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script> -->
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.1/progressbar.min.js"></script> -->
+    <script src="app.js"></script>
+  </body>
+</html>
