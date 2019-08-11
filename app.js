@@ -1,5 +1,5 @@
-let lengthSession = 25;
-let lengthBreak = 5;
+let lengthSession = 25; // integer only 1-60
+let lengthBreak = 5; // integer only 1-60
 let clockActive = null; // true, false, null
 
 const displayNote = () => {
@@ -45,18 +45,6 @@ breakDown.addEventListener("click", e => {
   displayLength();
 });
 
-// #11: When I click the element with the id of reset, any running timer should be stopped,
-// the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
-// and the element with id="time-left" should reset to it's default state.
-const reset = () => {
-  lengthSession = 25;
-  lengthBreak = 5;
-  clockActive = null;
-  displayLength();
-};
-const resetButton = document.querySelector("#reset");
-resetButton.addEventListener("click", e => reset());
-
 // #18: When I first click the element with id="start_stop", the timer should begin running from the value currently displayed in id="session-length", even if the value has been incremented or decremented from the original value of 25.
 // #19: If the timer is running, the element with the id of time-left should display the remaining time in mm:ss format (decrementing by a value of 1 and updating the display every 1000ms).
 // #20: If the timer is running and I click the element with id="start_stop", the countdown should pause.
@@ -70,17 +58,61 @@ resetButton.addEventListener("click", e => reset());
 // #28: The audio element with id of beep must stop playing and be rewound to the beginning when the element with the id of reset is clicked.
 
 // Progress Bar
+// 1 min === 60000 milliseconds
+// 1 second === 1000 millisecods
+let timeInMilli = 180000; // 3min
+
 const ProgressBar = require("progressbar.js");
 
 var line = new ProgressBar.Line("#container");
 const circle = new ProgressBar.Circle(container, {
   strokeWidth: 2,
   easing: "linear",
-  duration: 140000, // edit this based on time
+  duration: timeInMilli, // edit this based on time
   color: "white",
   trailColor: "#f5493d",
   trailWidth: 2,
   svgStyle: null
 });
 
-circle.animate(1);
+const timeLeft = document.querySelector("#time-left")
+const pressPlayPause = () => {
+  const timer = setInterval(() => {
+    let now = new Date()
+    let secs = now.getSeconds();
+    let mins = now.getMinutes();
+    timeLeft.textContent = `${mins}:${secs}`
+  }, 1000);
+}
+
+const play = document.querySelector(".fa-play-circle");
+const pause = document.querySelector(".fa-pause-circle");
+const startStop = document.querySelector("#start-stop");
+startStop.addEventListener("click", e => {
+  play.classList.toggle("toggle");
+  pause.classList.toggle("toggle");
+  if (clockActive === null || clockActive === false) {
+    pressPlayPause();
+    clockActive = true;
+    circle.animate(1);
+  } else if (clockActive === true) {
+    clockActive = false;
+    circle.animate().stop();
+    console.log(clockActive)
+  }
+})
+
+// #11: When I click the element with the id of reset, any running timer should be stopped,
+// the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
+// and the element with id="time-left" should reset to it's default state.
+const reset = () => {
+  lengthSession = 25;
+  lengthBreak = 5;
+  clockActive = null;
+  play.classList.remove("toggle");
+  pause.classList.add("toggle");
+  displayLength();
+  circle.set(0)
+};
+const resetButton = document.querySelector("#reset");
+resetButton.addEventListener("click", e => reset());
