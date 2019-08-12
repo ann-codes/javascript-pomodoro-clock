@@ -1,14 +1,13 @@
-let lengthSession = 25; // integer only 1-60
-let lengthBreak = 1; // integer only 1-60
-let clockActive = null; // true, false, null
+let lengthSession = 1; // integer only, 1-60
+let lengthBreak = 1; // integer only, 1-60
+let clockStatus = "off"; // off, on, pause
 
-// need none, on, off, pause status? boolean is not enough?
 const displayNote = () => {
-  if (clockActive === null) {
+  if (clockStatus === "off") {
     return "Let's Get Started!";
-  } else if (clockActive === true) {
+  } else if (clockStatus === "on") {
     return "Be Productive!";
-  } else {
+  } else if (clockStatus === "break") {
     return "Time for a Break!";
   }
 };
@@ -47,8 +46,6 @@ breakDown.addEventListener("click", e => {
   displayLength();
 });
 
-// #18: When I first click the element with id="start_stop", the timer should begin running from the value currently displayed in id="session-length", even if the value has been incremented or decremented from the original value of 25.
-// #19: If the timer is running, the element with the id of time-left should display the remaining time in mm:ss format (decrementing by a value of 1 and updating the display every 1000ms).
 // #20: If the timer is running and I click the element with id="start_stop", the countdown should pause.
 // #21: If the timer is paused and I click the element with id="start_stop", the countdown should resume running from the point at which it was paused.
 // #22: When a session countdown reaches zero (NOTE: timer MUST reach 00:00), and a new countdown begins, the element with the id of timer-label should display a string indicating a break has begun.
@@ -61,8 +58,8 @@ breakDown.addEventListener("click", e => {
 
 // Progress Bar
 // 1 min === 60000 milliseconds
-// 1 second === 1000 millisecods
-let timeInMilli = 180000; // 3min
+let sessionInMilli = lengthSession * 60000;
+let breakInMilli = lengthBreak * 60000;
 
 const ProgressBar = require("progressbar.js");
 
@@ -70,24 +67,27 @@ var line = new ProgressBar.Line("#container");
 const circle = new ProgressBar.Circle(container, {
   strokeWidth: 2,
   easing: "linear",
-  duration: timeInMilli, // edit this based on time
+  duration: sessionInMilli,
   color: "white",
   trailColor: "#f5493d",
   trailWidth: 2,
   svgStyle: null
 });
 
-// console tests
-// let now1 = new Date();
-// console.log(now1);
-// console.log(now1.getTime());
-// let deadline = lengthSession * 60000 + now1.getTime();
-// let deadlineTest = new Date(deadline);
-// console.log(deadlineTest.toLocaleString("en-US"));
-// console.log(new Date(deadline).getMinutes());
-// console.log(new Date(deadline).getSeconds());
+// circleFor the breaks ### use later
+// const circleBreak = new ProgressBar.Circle(container, {
+//   strokeWidth: 2,
+//   easing: "linear",
+//   duration: breakInMilli,
+//   color: "#00ff33",
+//   trailColor: "white",
+//   trailWidth: 2,
+//   svgStyle: null
+// });
 
 const timeLeft = document.querySelector("#time-left");
+
+// this function shouldn't be a function, need to wrap into the startStop eventLisenter
 const pressPlayPause = () => {
   let hardNow = new Date().getTime();
   const timer = setInterval(() => {
@@ -95,29 +95,33 @@ const pressPlayPause = () => {
     const nowForCalc = new Date().getTime();
     let diffNowDeadline = deadline - nowForCalc;
     let mins = Math.floor((diffNowDeadline % (1000 * 60 * 60)) / (1000 * 60));
-    console.log(mins);
     let secs = Math.floor((diffNowDeadline % (1000 * 60)) / 1000);
-    console.log(secs);
-    timeLeft.textContent = `${mins}:${secs}`;
+    if (diffNowDeadline > 0) {
+      timeLeft.textContent = `${mins}:${secs}`;
+    }
   }, 1000);
 };
+// create pause function with clearInterval(x) and setting the paused time value as the new length
+// (in mins and secs). When resuming, use restart pausePlay() with new
 
+// redo to not have toggle?
 const play = document.querySelector(".fa-play-circle");
 const pause = document.querySelector(".fa-pause-circle");
 const startStop = document.querySelector("#start-stop");
 startStop.addEventListener("click", e => {
-  play.classList.toggle("toggle");
-  pause.classList.toggle("toggle");
-  if (clockActive === null || clockActive === false) {
+  // play.classList.toggle("toggle-hide");
+  // pause.classList.toggle("toggle-hide");
+  if (clockStatus === "off") {
     pressPlayPause();
-    clockActive = true;
+    clockStatus = "on";
     circle.animate(1);
     timerLabel.textContent = displayNote();
-  } else if (clockActive === true) {
+    console.log(clockStatus);
+  } else if (clockStatus === "on") {
     circle.animate().stop();
-    clockActive = false;
+    clockStatus = "pause";
     timerLabel.textContent = displayNote();
-    console.log(clockActive);
+    console.log(clockStatus);
   }
 });
 
@@ -127,7 +131,7 @@ startStop.addEventListener("click", e => {
 const reset = () => {
   lengthSession = 25;
   lengthBreak = 5;
-  clockActive = null;
+  clockStatus = "off";
   play.classList.remove("toggle");
   pause.classList.add("toggle");
   displayLength();
