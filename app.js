@@ -1,7 +1,8 @@
 let lengthSession = 25; // integer only 1-60
-let lengthBreak = 5; // integer only 1-60
+let lengthBreak = 1; // integer only 1-60
 let clockActive = null; // true, false, null
 
+// need none, on, off, pause status? boolean is not enough?
 const displayNote = () => {
   if (clockActive === null) {
     return "Let's Get Started!";
@@ -26,6 +27,7 @@ const breakLength = document.querySelector("#break-length");
 const displayLength = () => {
   sessionLength.textContent = lengthSession;
   breakLength.textContent = lengthBreak;
+  timeLeft.textContent = `${lengthSession}:00`;
 };
 
 sessionUp.addEventListener("click", e => {
@@ -75,15 +77,30 @@ const circle = new ProgressBar.Circle(container, {
   svgStyle: null
 });
 
-const timeLeft = document.querySelector("#time-left")
+// console tests
+// let now1 = new Date();
+// console.log(now1);
+// console.log(now1.getTime());
+// let deadline = lengthSession * 60000 + now1.getTime();
+// let deadlineTest = new Date(deadline);
+// console.log(deadlineTest.toLocaleString("en-US"));
+// console.log(new Date(deadline).getMinutes());
+// console.log(new Date(deadline).getSeconds());
+
+const timeLeft = document.querySelector("#time-left");
 const pressPlayPause = () => {
+  let hardNow = new Date().getTime();
   const timer = setInterval(() => {
-    let now = new Date()
-    let secs = now.getSeconds();
-    let mins = now.getMinutes();
-    timeLeft.textContent = `${mins}:${secs}`
+    let deadline = lengthSession * 60000 + hardNow;
+    const nowForCalc = new Date().getTime();
+    let diffNowDeadline = deadline - nowForCalc;
+    let mins = Math.floor((diffNowDeadline % (1000 * 60 * 60)) / (1000 * 60));
+    console.log(mins);
+    let secs = Math.floor((diffNowDeadline % (1000 * 60)) / 1000);
+    console.log(secs);
+    timeLeft.textContent = `${mins}:${secs}`;
   }, 1000);
-}
+};
 
 const play = document.querySelector(".fa-play-circle");
 const pause = document.querySelector(".fa-pause-circle");
@@ -95,12 +112,14 @@ startStop.addEventListener("click", e => {
     pressPlayPause();
     clockActive = true;
     circle.animate(1);
+    timerLabel.textContent = displayNote();
   } else if (clockActive === true) {
-    clockActive = false;
     circle.animate().stop();
-    console.log(clockActive)
+    clockActive = false;
+    timerLabel.textContent = displayNote();
+    console.log(clockActive);
   }
-})
+});
 
 // #11: When I click the element with the id of reset, any running timer should be stopped,
 // the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
@@ -112,7 +131,12 @@ const reset = () => {
   play.classList.remove("toggle");
   pause.classList.add("toggle");
   displayLength();
-  circle.set(0)
+  circle.set(0);
 };
 const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
+
+const start = () => {
+  displayLength();
+};
+window.onload = start();
