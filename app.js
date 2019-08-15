@@ -3,6 +3,7 @@ let lengthBreak = 1; // integer only, 1-60
 let seconds = lengthSession * 60;
 let minutes = seconds / 60;
 let interval;
+let hardNow;
 let sessionOn = false;
 let breakOn = false;
 let pauseOn = false; // add to the first condistional in display timer label
@@ -130,7 +131,7 @@ const runTimer2 = () => {
 
 const timeLeft = document.querySelector("#time-left");
 // this function shouldn't be a function, need to wrap into the startStop eventLisenter
-let hardNow = new Date().getTime();
+
 const pressPlayPause = () => {
   let deadline = lengthSession * 60000 + hardNow;
   const nowForCalc = new Date().getTime();
@@ -151,6 +152,7 @@ const startStop = document.querySelector("#start-stop");
 play.addEventListener(
   "click",
   e => {
+    hardNow = new Date().getTime();
     // play.classList.toggle("toggle-hide");
     // pause.classList.toggle("toggle-hide");
     if (!sessionOn) {
@@ -184,12 +186,15 @@ pause.addEventListener(
 // #11: When I click the element with the id of reset, any running timer should be stopped,
 // the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
 // and the element with id="time-left" should reset to it's default state.
+// reset controls
 const reset = () => {
+  hardNow = 0;
+  clearInterval(interval);
   lengthSession = 25;
   lengthBreak = 5;
-  clockStatus = "off";
-  play.classList.remove("toggle");
-  pause.classList.add("toggle");
+  sessionOn = false;
+  breakOn = false;
+  pauseOn = false;
   displayLength();
   circle.set(0);
 };
