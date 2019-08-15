@@ -1,50 +1,65 @@
-let lengthSession = 1; // integer only, 1-60
+let lengthSession = 2; // integer only, 1-60
 let lengthBreak = 1; // integer only, 1-60
+let seconds = lengthSession * 60;
+let minutes = seconds / 60;
+let interval;
+let sessionOn = false;
+let breakOn = false;
+let pauseOn = false; // add to the first condistional in display timer label
 let clockStatus = "off"; // off, on, pause
 
-const displayNote = () => {
-  if (clockStatus === "off") {
+const displayTimerLabel = () => {
+  if (!sessionOn && !breakOn) {
     return "Let's Get Started!";
-  } else if (clockStatus === "on") {
+  } else if (sessionOn && !breakOn) {
     return "Be Productive!";
-  } else if (clockStatus === "break") {
+  } else if (!sessionOn && breakOn) {
     return "Time for a Break!";
   }
 };
 
+// leading zero helper
+const leadingZero = num => (num < 10 ? "0" + num : num);
+
 const timerLabel = document.querySelector("#timer-label");
-timerLabel.textContent = displayNote(); // function this for later?
+timerLabel.textContent = displayTimerLabel(); // function this for later?
+
+// ------------------------ controls for changing session and break lengths
+const sessionLength = document.querySelector("#session-length");
+const breakLength = document.querySelector("#break-length");
+const displayLength = () => {
+  sessionLength.textContent = lengthSession;
+  breakLength.textContent = lengthBreak;
+  timeLeft.textContent = `${leadingZero(lengthSession)}:00`;
+};
 
 const sessionUp = document.querySelector("#session-increment");
 const sessionDown = document.querySelector("#session-decrement");
 const breakUp = document.querySelector("#break-increment");
 const breakDown = document.querySelector("#break-decrement");
 
-const sessionLength = document.querySelector("#session-length");
-const breakLength = document.querySelector("#break-length");
-
-const displayLength = () => {
-  sessionLength.textContent = lengthSession;
-  breakLength.textContent = lengthBreak;
-  timeLeft.textContent = `${lengthSession}:00`;
+const updateSession = up => {
+  if (up) {
+    lengthSession < 60 ? (lengthSession += 1) : (lengthSession = 60);
+  } else {
+    lengthSession > 1 ? (lengthSession -= 1) : (lengthSession = 1);
+  }
+  displayLength();
 };
 
-sessionUp.addEventListener("click", e => {
-  lengthSession < 60 ? (lengthSession += 1) : (lengthSession = 60);
+const updateBreak = up => {
+  if (up) {
+    lengthBreak < 60 ? (lengthBreak += 1) : (lengthBreak = 60);
+  } else {
+    lengthBreak > 1 ? (lengthBreak -= 1) : (lengthBreak = 1);
+  }
   displayLength();
-});
-sessionDown.addEventListener("click", e => {
-  lengthSession > 1 ? (lengthSession -= 1) : (lengthSession = 1);
-  displayLength();
-});
-breakUp.addEventListener("click", e => {
-  lengthBreak < 60 ? (lengthBreak += 1) : (lengthBreak = 60);
-  displayLength();
-});
-breakDown.addEventListener("click", e => {
-  lengthBreak > 1 ? (lengthBreak -= 1) : (lengthBreak = 1);
-  displayLength();
-});
+};
+
+sessionUp.addEventListener("click", e => updateSession(true), false);
+sessionDown.addEventListener("click", e => updateSession(false), false);
+breakUp.addEventListener("click", e => updateBreak(true), false);
+breakDown.addEventListener("click", e => updateBreak(false), false);
 
 // #20: If the timer is running and I click the element with id="start_stop", the countdown should pause.
 // #21: If the timer is paused and I click the element with id="start_stop", the countdown should resume running from the point at which it was paused.
@@ -88,18 +103,16 @@ const circle = new ProgressBar.Circle(container, {
 const timeLeft = document.querySelector("#time-left");
 
 // this function shouldn't be a function, need to wrap into the startStop eventLisenter
+let hardNow = new Date().getTime();
 const pressPlayPause = () => {
-  let hardNow = new Date().getTime();
-  const timer = setInterval(() => {
-    let deadline = lengthSession * 60000 + hardNow;
-    const nowForCalc = new Date().getTime();
-    let diffNowDeadline = deadline - nowForCalc;
-    let mins = Math.floor((diffNowDeadline % (1000 * 60 * 60)) / (1000 * 60));
-    let secs = Math.floor((diffNowDeadline % (1000 * 60)) / 1000);
-    if (diffNowDeadline > 0) {
-      timeLeft.textContent = `${mins}:${secs}`;
-    }
-  }, 1000);
+  let deadline = lengthSession * 60000 + hardNow;
+  const nowForCalc = new Date().getTime();
+  let diffNowDeadline = deadline - nowForCalc;
+  let mins = Math.floor((diffNowDeadline % (1000 * 60 * 60)) / (1000 * 60));
+  let secs = Math.floor((diffNowDeadline % (1000 * 60)) / 1000);
+  if (diffNowDeadline > 0) {
+    timeLeft.textContent = `${leadingZero(mins)}:${leadingZero(secs)}`;
+  }
 };
 // create pause function with clearInterval(x) and setting the paused time value as the new length
 // (in mins and secs). When resuming, use restart pausePlay() with new
@@ -111,18 +124,17 @@ const startStop = document.querySelector("#start-stop");
 startStop.addEventListener("click", e => {
   // play.classList.toggle("toggle-hide");
   // pause.classList.toggle("toggle-hide");
-  if (clockStatus === "off") {
-    pressPlayPause();
-    clockStatus = "on";
-    circle.animate(1);
-    timerLabel.textContent = displayNote();
-    console.log(clockStatus);
-  } else if (clockStatus === "on") {
-    circle.animate().stop();
-    clockStatus = "pause";
-    timerLabel.textContent = displayNote();
-    console.log(clockStatus);
+  if (!sessionOn) {
+    interval = setInterval(pressPlayPause, 100); /// 1000 is 1 sec
+    sessionOn = true;
+    circle.animate(1); // progress bar
+    timerLabel.textContent = displayTimerLabel();
   }
+});
+
+pause.addEventListener("click", e => {
+  clearInterval(interval);
+  circle.animate().stop(); // progress bar
 });
 
 // #11: When I click the element with the id of reset, any running timer should be stopped,
@@ -140,7 +152,4 @@ const reset = () => {
 const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
 
-const start = () => {
-  displayLength();
-};
-window.onload = start();
+displayLength();
