@@ -63,11 +63,11 @@ breakDown.addEventListener("click", e => updateBreak(false), false);
 
 // #20: If the timer is running and I click the element with id="start_stop", the countdown should pause.
 // #21: If the timer is paused and I click the element with id="start_stop", the countdown should resume running from the point at which it was paused.
-// #22: When a session countdown reaches zero (NOTE: timer MUST reach 00:00), and a new countdown begins, the element with the id of timer-label should display a string indicating a break has begun.
-// #23: When a session countdown reaches zero (NOTE: timer MUST reach 00:00), a new break countdown should begin, counting down from the value currently displayed in the id="break-length" element.
-// #24: When a break countdown reaches zero (NOTE: timer MUST reach 00:00), and a new countdown begins, the element with the id of timer-label should display a string indicating a session has begun.
-// #25: When a break countdown reaches zero (NOTE: timer MUST reach 00:00), a new session countdown should begin, counting down from the value currently displayed in the id="session-length" element.
-// #26: When a countdown reaches zero (NOTE: timer MUST reach 00:00), a sound indicating that time is up should play. This should utilize an HTML5 audio tag and have a corresponding id="beep".
+// #22: When a session countdown reaches zero (00:00), and a new countdown begins, the element with the id of timer-label should display a string indicating a break has begun.
+// #23: When a session countdown reaches zero (00:00), a new break countdown should begin, counting down from the value currently displayed in the id="break-length" element.
+// #24: When a break countdown reaches zero (00:00), and a new countdown begins, the element with the id of timer-label should display a string indicating a session has begun.
+// #25: When a break countdown reaches zero (00:00), a new session countdown should begin, counting down from the value currently displayed in the id="session-length" element.
+// #26: When a countdown reaches zero (00:00), a sound indicating that time is up should play. This should utilize an HTML5 audio tag and have a corresponding id="beep".
 // #27: The audio element with id="beep" must be 1 second or longer.
 // #28: The audio element with id of beep must stop playing and be rewound to the beginning when the element with the id of reset is clicked.
 
@@ -100,8 +100,35 @@ const circle = new ProgressBar.Circle(container, {
 //   svgStyle: null
 // });
 
-const timeLeft = document.querySelector("#time-left");
+// Testing with setInterval Only
+const runTimer = () => {
+  let countdown = `${leadingZero(lengthSession)}:${leadingZero(seconds)}`;
+  timeLeft.textContent = countdown;
+  if (lengthSession > 0) {
+    if (seconds > 0) {
+      console.log(lengthSession, --seconds);
+    }
+    // if (seconds === 0) {
+    //   lengthSession = lengthSession - 1;
+    //   seconds = 59;
+    // }
+  }
+};
+const runTimer2 = () => {
+  let countdown = `${leadingZero(minutes)}:${leadingZero(seconds)}`;
+  timeLeft.textContent = countdown;
+  if (minutes > 0) {
+    if (seconds > 0) {
+      console.log(minutes, --seconds);
+    }
+    if (seconds === 0) {
+      minutes = minutes - 1;
+      seconds = 59;
+    }
+  }
+};
 
+const timeLeft = document.querySelector("#time-left");
 // this function shouldn't be a function, need to wrap into the startStop eventLisenter
 let hardNow = new Date().getTime();
 const pressPlayPause = () => {
@@ -121,21 +148,38 @@ const pressPlayPause = () => {
 const play = document.querySelector(".fa-play-circle");
 const pause = document.querySelector(".fa-pause-circle");
 const startStop = document.querySelector("#start-stop");
-startStop.addEventListener("click", e => {
-  // play.classList.toggle("toggle-hide");
-  // pause.classList.toggle("toggle-hide");
-  if (!sessionOn) {
-    interval = setInterval(pressPlayPause, 100); /// 1000 is 1 sec
-    sessionOn = true;
-    circle.animate(1); // progress bar
-    timerLabel.textContent = displayTimerLabel();
-  }
-});
+play.addEventListener(
+  "click",
+  e => {
+    // play.classList.toggle("toggle-hide");
+    // pause.classList.toggle("toggle-hide");
+    if (!sessionOn) {
+      interval = setInterval(pressPlayPause, 100); /// 1000 is 1 sec
+      sessionOn = true;
+      circle.animate(1); // progress bar
+      timerLabel.textContent = displayTimerLabel();
+    }
+    if (sessionOn && pauseOn) {
+      pauseOn = false;
+      interval = setInterval(pressPlayPause, 100);
+      circle.animate(1);
+      timerLabel.textContent = displayTimerLabel();
+    }
+  },
+  false
+);
 
-pause.addEventListener("click", e => {
-  clearInterval(interval);
-  circle.animate().stop(); // progress bar
-});
+pause.addEventListener(
+  "click",
+  e => {
+    if ((sessionOn || breakOn) && !pauseOn) {
+      pauseOn = true;
+      clearInterval(interval);
+      circle.animate().stop(); // progress bar
+    }
+  },
+  false
+);
 
 // #11: When I click the element with the id of reset, any running timer should be stopped,
 // the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
