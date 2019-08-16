@@ -1,29 +1,17 @@
 const sound = new Audio("sound.mp3");
-// sound.play() // maybe different sfx?
 let sessionLength = 2; // integer only, 1-60
 let breakLength = 1; // integer only, 1-60
-let seconds = sessionLength * 60;
-let interval;
-let hardNow;
+let sessionTime = sessionLength * 60;
+let breakTime = breakLength * 60;
+let sessionInterval;
+let breakInterval;
 let sessionOn = false;
 let breakOn = false;
 let pauseOn = false; // add to the first condistional in display timer label
 
-const displayTimerLabel = () => {
-  if (!sessionOn && !breakOn) {
-    return "Let's Get Started!";
-  } else if (sessionOn && !breakOn) {
-    return "Be Productive!";
-  } else if (!sessionOn && breakOn) {
-    return "Time for a Break!";
-  }
-};
-
 // leading zero helper
 const leadingZero = num => (num < 10 ? "0" + num : num);
-
 const timerLabel = document.querySelector("#timer-label");
-timerLabel.textContent = displayTimerLabel(); // function this for later?
 
 // ------------------------ controls for changing session and break lengths
 const lengthSession = document.querySelector("#session-length");
@@ -60,8 +48,8 @@ const updateBreak = up => {
   displayLengthChoice();
 };
 
-const canEditLength = noEdit => {
-  if (!noEdit) {
+const canEditLength = canEdit => {
+  if (!canEdit) {
     upDown.forEach(e => e.classList.add("toggle-hide"));
   } else {
     upDown.forEach(e => e.classList.remove("toggle-hide"));
@@ -109,33 +97,48 @@ const circle = new ProgressBar.Circle(container, {
 //   svgStyle: null
 // });
 
-// Testing with setInterval Only
-const runTimer = () => {
-  // let totalSecs = sessionLength * 60;
-  let secsLeft;
-  seconds = seconds - 1;
-
-  let mins = Math.floor(seconds / 60);
-  let secs = Math.floor(seconds % 60);
-  let countdown = `${leadingZero(mins)}:${leadingZero(secs)}`;
-
-  console.log(countdown);
-};
-// setInterval(runTimer, 1000);
-
 const timeLeft = document.querySelector("#time-left");
-const pressPlayPause = () => {
-  let deadline = sessionLength * 60000 + hardNow;
-  const nowForCalc = new Date().getTime();
-  let diffNowDeadline = deadline - nowForCalc;
-  let mins = Math.floor((diffNowDeadline % (1000 * 60 * 60)) / (1000 * 60));
-  let secs = Math.floor((diffNowDeadline % (1000 * 60)) / 1000);
-  if (diffNowDeadline > 0) {
-    timeLeft.textContent = `${leadingZero(mins)}:${leadingZero(secs)}`;
+
+// Testing with setInterval Only
+const runSession = () => {
+  sessionOn = true;
+  sessionTime = sessionTime - 1;
+  let mins = Math.floor(sessionTime / 60);
+  let secs = Math.floor(sessionTime % 60);
+  let countdown = `${leadingZero(mins)}:${leadingZero(secs)}`;
+  if (sessionTime >= 0) {
+    timeLeft.textContent = countdown;
+    timerLabel.textContent = "Be Productive!";
+  }
+  if (sessionTime === 0) {
+    sessionOn = false;
+    sound.play(); // maybe different sfx?
+    clearInterval(sessionInterval);
+    sessionTime = sessionLength * 60;
+    breakInterval = setInterval(runBreak, 40); // remember to change back to 1000
   }
 };
-// create pause function with clearInterval(x) and setting the paused time value as the new length
-// (in mins and secs). When resuming, use restart pausePlay() with new
+
+const runBreak = () => {
+  breakOn = true;
+  breakTime = breakTime - 1;
+  let minsB = Math.floor(breakTime / 60);
+  let secsB = Math.floor(breakTime % 60);
+  let countdownB = `${leadingZero(minsB)}:${leadingZero(secsB)}`;
+  if (breakTime >= 0) {
+    timeLeft.textContent = countdownB;
+    timerLabel.textContent = "Time for a Break!";
+  }
+  if (breakTime === 0) {
+    breakOn = false;
+    sound.play(); // maybe different sfx?
+    clearInterval(breakInterval);
+    breakTime = breakLength * 60;
+    sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
+  }
+};
+
+runBreak();
 
 // redo to not have toggle?
 const play = document.querySelector(".fa-play-circle");
@@ -143,25 +146,22 @@ const pause = document.querySelector(".fa-pause-circle");
 play.addEventListener(
   "click",
   e => {
-    hardNow = new Date().getTime();
     play.classList.toggle("toggle-hide");
     pause.classList.toggle("toggle-hide");
     canEditLength(false);
     if (!sessionOn) {
-      sessionOn = true;
+      // sessionOn = true;
       pauseOn = false;
       breakOn = false;
-      interval = setInterval(pressPlayPause, 100); /// 1000 is 1 sec
+      sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
       circle.animate(1); // progress bar
-      timerLabel.textContent = displayTimerLabel();
     }
     if (sessionOn && pauseOn) {
       pauseOn = false;
       sessionOn = false;
       breakOn = false;
-      interval = setInterval(pressPlayPause, 100);
+      sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
       circle.animate(1);
-      timerLabel.textContent = displayTimerLabel();
     }
   },
   false
@@ -176,7 +176,8 @@ pause.addEventListener(
       pauseOn = true;
       sessionOn = false;
       breakOn = false;
-      clearInterval(interval);
+      clearInterval(sessionInterval);
+      clearInterval(breakInterval);
       circle.animate().stop(); // progress bar
     }
   },
@@ -188,8 +189,8 @@ pause.addEventListener(
 // and the element with id="time-left" should reset to it's default state.
 // reset controls
 const reset = () => {
-  hardNow = 0;
-  clearInterval(interval);
+  clearInterval(sessionInterval);
+  clearInterval(breakInterval);
   sessionLength = 25;
   breakLength = 5;
   sessionOn = false;
@@ -204,5 +205,7 @@ const reset = () => {
 const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
 
+
 displayLengthChoice();
+timerLabel.textContent =  "Let's Get Started!";
 timeLeft.textContent = `${leadingZero(sessionLength)}:00`;
