@@ -96,9 +96,13 @@ i:hover {
   font-size: 4.3rem;
 }
 
-/* .toggle-hide {
+.toggle-hide {
   display: none;
-} */
+  visibility: hidden;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+}
 
 /* ---------- FOOTER ---------- */
 .attributions {
