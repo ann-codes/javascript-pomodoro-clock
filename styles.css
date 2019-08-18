@@ -102,6 +102,10 @@ i:hover {
   position: absolute !important;
   top: -9999px !important;
   left: -9999px !important;
+  height: 1px;
+  width: 1px;
+  padding: 0;
+  margin: 0;
 }
 
 /* ---------- FOOTER ---------- */

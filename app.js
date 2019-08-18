@@ -1,27 +1,35 @@
-const sound = new Audio("sound.mp3");
-let sessionLength = 2; // integer only, 1-60
-let breakLength = 1; // integer only, 1-60
-let sessionTime = sessionLength * 60;
-let breakTime = breakLength * 60;
+const ProgressBar = require("progressbar.js");
+const beep = new Audio("sound.mp3");
+let sessionLength = 25;
+let breakLength = 5;
+let sessionTime;
+let breakTime;
 let sessionInterval;
 let breakInterval;
 let sessionOn = false;
 let breakOn = false;
-let pauseOn = false; // add to the first condistional in display timer label
+let pauseOn = false;
+let millisecs = 1000; // for testing
 
-// leading zero helper
+function status() {
+  console.log(
+    "session=" + sessionOn + " / break=" + breakOn + " / paused=" + pauseOn
+  );
+}
+
+// ------------------------- leading zero helper
 const leadingZero = num => (num < 10 ? "0" + num : num);
-const timerLabel = document.querySelector("#timer-label");
 
 // ------------------------ controls for changing session and break lengths
+const timerLabel = document.querySelector("#timer-label");
 const lengthSession = document.querySelector("#session-length");
 const lengthBreak = document.querySelector("#break-length");
-const displayLengthChoice = () => {
+const displayLengthAndSetTime = () => {
+  sessionTime = sessionLength * 60;
+  breakTime = breakLength * 60;
   lengthSession.textContent = sessionLength;
   lengthBreak.textContent = breakLength;
-  if (!sessionOn && !breakOn) {
-    timeLeft.textContent = `${leadingZero(sessionLength)}:00`;
-  }
+  timeLeft.textContent = `${leadingZero(sessionLength)}:00`;
 };
 
 const upDown = document.querySelectorAll(".up-down-buttons");
@@ -36,7 +44,7 @@ const updateSession = up => {
   } else {
     sessionLength > 1 ? (sessionLength -= 1) : (sessionLength = 1);
   }
-  displayLengthChoice();
+  displayLengthAndSetTime();
 };
 
 const updateBreak = up => {
@@ -45,15 +53,13 @@ const updateBreak = up => {
   } else {
     breakLength > 1 ? (breakLength -= 1) : (breakLength = 1);
   }
-  displayLengthChoice();
+  displayLengthAndSetTime();
 };
 
-const canEditLength = canEdit => {
-  if (!canEdit) {
-    upDown.forEach(e => e.classList.add("toggle-hide"));
-  } else {
-    upDown.forEach(e => e.classList.remove("toggle-hide"));
-  }
+const hideEditLength = hideEdit => {
+  !hideEdit
+    ? upDown.forEach(e => e.classList.add("toggle-hide"))
+    : upDown.forEach(e => e.classList.remove("toggle-hide"));
 };
 
 sessionUp.addEventListener("click", e => updateSession(true), false);
@@ -61,45 +67,30 @@ sessionDown.addEventListener("click", e => updateSession(false), false);
 breakUp.addEventListener("click", e => updateBreak(true), false);
 breakDown.addEventListener("click", e => updateBreak(false), false);
 
-// #21: If the timer is paused and I click the element with id="start_stop",
-// the countdown should resume running from the point at which it was paused.
-// #26: When a countdown reaches zero (00:00), a sound indicating that time is up should play.
-// This should utilize an HTML5 audio tag and have a corresponding id="beep".
-// #27: The audio element with id="beep" must be 1 second or longer.
-// #28: The audio element with id of beep must stop playing and be rewound to the beginning when the element with the id of reset is clicked.
-
-// Progress Bar
-// 1 min === 60000 milliseconds
-let sessionInMilli = sessionLength * 60000;
-let breakInMilli = breakLength * 60000;
-
-const ProgressBar = require("progressbar.js");
-
-var line = new ProgressBar.Line("#container");
-const circle = new ProgressBar.Circle(container, {
+// ------------------------ controls progress bar defaults
+let circle = new ProgressBar.Circle(container, {
   strokeWidth: 2,
   easing: "linear",
-  duration: sessionInMilli,
+  duration: 60 * millisecs * sessionLength,
   color: "white",
   trailColor: "#f5493d",
   trailWidth: 2,
   svgStyle: null
 });
 
-// circleFor the breaks ### use later
-// const circleBreak = new ProgressBar.Circle(container, {
-//   strokeWidth: 2,
-//   easing: "linear",
-//   duration: breakInMilli,
-//   color: "#00ff33",
-//   trailColor: "white",
-//   trailWidth: 2,
-//   svgStyle: null
-// });
+const runProgressBar = () => {
+  if (sessionOn) {
+    circle.animate(1);
+  } else if (breakOn) {
+    circle.animate(1, {
+      duration: 60 * millisecs * breakLength,
+      easing: "linear"
+    });
+  }
+};
 
+// ------------------------ run session and breaks functions
 const timeLeft = document.querySelector("#time-left");
-
-// Testing with setInterval Only
 const runSession = () => {
   sessionOn = true;
   sessionTime = sessionTime - 1;
@@ -109,13 +100,16 @@ const runSession = () => {
   if (sessionTime >= 0) {
     timeLeft.textContent = countdown;
     timerLabel.textContent = "Be Productive!";
+    // circle.animate(1); // progress bar
   }
   if (sessionTime === 0) {
     sessionOn = false;
-    sound.play(); // maybe different sfx?
+    circle.set(0);
+    beep.play(); // maybe different sfx?
     clearInterval(sessionInterval);
+    clearInterval(breakInterval);
     sessionTime = sessionLength * 60;
-    breakInterval = setInterval(runBreak, 40); // remember to change back to 1000
+    breakInterval = setInterval(runBreak, millisecs);
   }
 };
 
@@ -128,19 +122,20 @@ const runBreak = () => {
   if (breakTime >= 0) {
     timeLeft.textContent = countdownB;
     timerLabel.textContent = "Time for a Break!";
+    runProgressBar();
   }
   if (breakTime === 0) {
     breakOn = false;
-    sound.play(); // maybe different sfx?
+    circle.set(0);
+    beep.play(); // maybe different sfx?
     clearInterval(breakInterval);
+    clearInterval(sessionInterval);
     breakTime = breakLength * 60;
-    sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
+    sessionInterval = setInterval(runSession, millisecs);
   }
 };
 
-runBreak();
-
-// redo to not have toggle?
+// ------------------------ pause/play event listeners buttons
 const play = document.querySelector(".fa-play-circle");
 const pause = document.querySelector(".fa-pause-circle");
 play.addEventListener(
@@ -148,20 +143,28 @@ play.addEventListener(
   e => {
     play.classList.toggle("toggle-hide");
     pause.classList.toggle("toggle-hide");
-    canEditLength(false);
-    if (!sessionOn) {
-      // sessionOn = true;
+    hideEditLength(false);
+    if (!sessionOn && !breakOn) {
+      //initialized
+      sessionOn = true;
       pauseOn = false;
       breakOn = false;
-      sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
-      circle.animate(1); // progress bar
+      sessionInterval = setInterval(runSession, millisecs);
+      // intervalControl();
+      runProgressBar();
+      status();
     }
-    if (sessionOn && pauseOn) {
+    if (pauseOn && sessionOn) {
       pauseOn = false;
-      sessionOn = false;
-      breakOn = false;
-      sessionInterval = setInterval(runSession, 40); // remember to change back to 1000
-      circle.animate(1);
+      sessionInterval = setInterval(runSession, millisecs);
+      runProgressBar();
+      status();
+    }
+    if (pauseOn && breakOn) {
+      pauseOn = false;
+      sessionInterval = setInterval(runBreak, millisecs);
+      runProgressBar();
+      status();
     }
   },
   false
@@ -174,20 +177,20 @@ pause.addEventListener(
     pause.classList.toggle("toggle-hide");
     if ((sessionOn || breakOn) && !pauseOn) {
       pauseOn = true;
-      sessionOn = false;
-      breakOn = false;
+      // sessionOn = false;
+      // breakOn = false;
+
+      status();
+
       clearInterval(sessionInterval);
       clearInterval(breakInterval);
-      circle.animate().stop(); // progress bar
+      circle.animate().stop();
     }
   },
   false
 );
 
-// #11: When I click the element with the id of reset, any running timer should be stopped,
-// the value within id="break-length" should return to 5, the value within id="session-length" should return to 25,
-// and the element with id="time-left" should reset to it's default state.
-// reset controls
+// ---------------------------------------------reset controls
 const reset = () => {
   clearInterval(sessionInterval);
   clearInterval(breakInterval);
@@ -196,8 +199,8 @@ const reset = () => {
   sessionOn = false;
   breakOn = false;
   pauseOn = false;
-  displayLengthChoice();
-  canEditLength(true);
+  displayLengthAndSetTime();
+  hideEditLength(true);
   circle.set(0);
   play.classList.remove("toggle-hide");
   pause.classList.add("toggle-hide");
@@ -205,7 +208,23 @@ const reset = () => {
 const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
 
+/// test
+function intervalControl() {
+  // if (pauseOn) {
+  //   clearInterval(sessionInterval);
+  //   clearInterval(breakInterval);
+  //   circle.animate().stop();
+  // } else
+  if (sessionOn && !breakOn) {
+    sessionInterval = setInterval(runSession, millisecs);
+  }
+  if (breakOn && !sessionOn) {
+    sessionInterval = setInterval(runBreak, millisecs);
+  }
+}
 
-displayLengthChoice();
-timerLabel.textContent =  "Let's Get Started!";
-timeLeft.textContent = `${leadingZero(sessionLength)}:00`;
+const start = () => {
+  displayLengthAndSetTime();
+  timerLabel.textContent = "Let's Get Started!";
+};
+window.onload = start();
