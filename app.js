@@ -1,7 +1,6 @@
-const ProgressBar = require("progressbar.js");
 const beep = new Audio("sound.mp3");
-let sessionLength = 25;
-let breakLength = 5;
+let sessionLength = 2;
+let breakLength = 1;
 let sessionTime;
 let breakTime;
 let sessionInterval;
@@ -9,8 +8,9 @@ let breakInterval;
 let sessionOn = false;
 let breakOn = false;
 let pauseOn = false;
-let millisecs = 1000; // for testing
+let millisecs = 100; // for testing
 
+// for testing
 function status() {
   console.log(
     "session=" + sessionOn + " / break=" + breakOn + " / paused=" + pauseOn
@@ -179,7 +179,6 @@ pause.addEventListener(
       pauseOn = true;
       // sessionOn = false;
       // breakOn = false;
-
       status();
 
       clearInterval(sessionInterval);
@@ -207,21 +206,6 @@ const reset = () => {
 };
 const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
-
-/// test
-function intervalControl() {
-  // if (pauseOn) {
-  //   clearInterval(sessionInterval);
-  //   clearInterval(breakInterval);
-  //   circle.animate().stop();
-  // } else
-  if (sessionOn && !breakOn) {
-    sessionInterval = setInterval(runSession, millisecs);
-  }
-  if (breakOn && !sessionOn) {
-    sessionInterval = setInterval(runBreak, millisecs);
-  }
-}
 
 const start = () => {
   displayLengthAndSetTime();
