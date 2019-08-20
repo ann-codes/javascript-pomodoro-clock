@@ -10,12 +10,26 @@ let breakOn = false;
 let pauseOn = false;
 let millisecs = 100; // for testing
 
-// for testing
+// for testing ### Remember to REMOVE
 function status() {
   console.log(
     "session=" + sessionOn + " / break=" + breakOn + " / paused=" + pauseOn
   );
+  console.log(
+    "Time remaining: " +
+      ((sessionTime / (sessionLength * 60)) * 100).toFixed(2) +
+      "%"
+  );
 }
+
+const progressCircle = document.querySelector(".progress-circle");
+const updateProgressCircle = (timeType, lengthType) => {
+  let percent = ((timeType / (lengthType * 60)) * 100).toFixed(2) + "%";
+  progressCircle.style.width = percent;
+  breakOn
+    ? (progressCircle.style.marginLeft = "auto")
+    : (progressCircle.style.marginLeft = 0);
+};
 
 // ------------------------- leading zero helper
 const leadingZero = num => (num < 10 ? "0" + num : num);
@@ -67,28 +81,6 @@ sessionDown.addEventListener("click", e => updateSession(false), false);
 breakUp.addEventListener("click", e => updateBreak(true), false);
 breakDown.addEventListener("click", e => updateBreak(false), false);
 
-// ------------------------ controls progress bar defaults
-let circle = new ProgressBar.Circle(container, {
-  strokeWidth: 2,
-  easing: "linear",
-  duration: 60 * millisecs * sessionLength,
-  color: "white",
-  trailColor: "#f5493d",
-  trailWidth: 2,
-  svgStyle: null
-});
-
-const runProgressBar = () => {
-  if (sessionOn) {
-    circle.animate(1);
-  } else if (breakOn) {
-    circle.animate(1, {
-      duration: 60 * millisecs * breakLength,
-      easing: "linear"
-    });
-  }
-};
-
 // ------------------------ run session and breaks functions
 const timeLeft = document.querySelector("#time-left");
 const runSession = () => {
@@ -100,11 +92,10 @@ const runSession = () => {
   if (sessionTime >= 0) {
     timeLeft.textContent = countdown;
     timerLabel.textContent = "Be Productive!";
-    // circle.animate(1); // progress bar
+    updateProgressCircle(sessionTime, sessionLength);
   }
   if (sessionTime === 0) {
     sessionOn = false;
-    circle.set(0);
     beep.play(); // maybe different sfx?
     clearInterval(sessionInterval);
     clearInterval(breakInterval);
@@ -122,11 +113,10 @@ const runBreak = () => {
   if (breakTime >= 0) {
     timeLeft.textContent = countdownB;
     timerLabel.textContent = "Time for a Break!";
-    runProgressBar();
+    updateProgressCircle(breakTime, breakLength);
   }
   if (breakTime === 0) {
     breakOn = false;
-    circle.set(0);
     beep.play(); // maybe different sfx?
     clearInterval(breakInterval);
     clearInterval(sessionInterval);
@@ -145,25 +135,20 @@ play.addEventListener(
     pause.classList.toggle("toggle-hide");
     hideEditLength(false);
     if (!sessionOn && !breakOn) {
-      //initialized
       sessionOn = true;
       pauseOn = false;
       breakOn = false;
       sessionInterval = setInterval(runSession, millisecs);
-      // intervalControl();
-      runProgressBar();
       status();
     }
     if (pauseOn && sessionOn) {
       pauseOn = false;
       sessionInterval = setInterval(runSession, millisecs);
-      runProgressBar();
       status();
     }
     if (pauseOn && breakOn) {
       pauseOn = false;
       sessionInterval = setInterval(runBreak, millisecs);
-      runProgressBar();
       status();
     }
   },
@@ -177,13 +162,9 @@ pause.addEventListener(
     pause.classList.toggle("toggle-hide");
     if ((sessionOn || breakOn) && !pauseOn) {
       pauseOn = true;
-      // sessionOn = false;
-      // breakOn = false;
       status();
-
       clearInterval(sessionInterval);
       clearInterval(breakInterval);
-      circle.animate().stop();
     }
   },
   false
@@ -200,7 +181,8 @@ const reset = () => {
   pauseOn = false;
   displayLengthAndSetTime();
   hideEditLength(true);
-  circle.set(0);
+  progressCircle.style.removeProperty("width");
+  progressCircle.style.removeProperty("margin-left");
   play.classList.remove("toggle-hide");
   pause.classList.add("toggle-hide");
 };
