@@ -1,6 +1,6 @@
-const beep = new Audio("sound.mp3");
-let sessionLength = 2;
-let breakLength = 1;
+const beep = new Audio("chime.mp3");
+let sessionLength = 25;
+let breakLength = 5;
 let sessionTime;
 let breakTime;
 let sessionInterval;
@@ -8,21 +8,26 @@ let breakInterval;
 let sessionOn = false;
 let breakOn = false;
 let pauseOn = false;
-let millisecs = 100; // for testing
+let millisecs = 1000; // 1k === 1 second
 
-// for testing ### Remember to REMOVE
-function status() {
-  console.log(
-    "session=" + sessionOn + " / break=" + breakOn + " / paused=" + pauseOn
-  );
-  console.log(
-    "Time remaining: " +
-      ((sessionTime / (sessionLength * 60)) * 100).toFixed(2) +
-      "%"
-  );
-}
-
+// ------------------------- labels
 const progressCircle = document.querySelector(".progress-circle");
+const timerLabel = document.querySelector("#timer-label");
+const lengthSession = document.querySelector("#session-length");
+const lengthBreak = document.querySelector("#break-length");
+const upDown = document.querySelectorAll(".up-down-buttons");
+const sessionUp = document.querySelector("#session-increment");
+const sessionDown = document.querySelector("#session-decrement");
+const breakUp = document.querySelector("#break-increment");
+const breakDown = document.querySelector("#break-decrement");
+const timeLeft = document.querySelector("#time-left");
+const play = document.querySelector(".fa-play-circle");
+const pause = document.querySelector(".fa-pause-circle");
+const resetButton = document.querySelector("#reset");
+
+// ------------------------- helper and display functions
+const leadingZero = num => (num < 10 ? "0" + num : num);
+
 const updateProgressCircle = (timeType, lengthType) => {
   let percent = ((timeType / (lengthType * 60)) * 100).toFixed(2) + "%";
   progressCircle.style.width = percent;
@@ -31,13 +36,6 @@ const updateProgressCircle = (timeType, lengthType) => {
     : (progressCircle.style.marginLeft = 0);
 };
 
-// ------------------------- leading zero helper
-const leadingZero = num => (num < 10 ? "0" + num : num);
-
-// ------------------------ controls for changing session and break lengths
-const timerLabel = document.querySelector("#timer-label");
-const lengthSession = document.querySelector("#session-length");
-const lengthBreak = document.querySelector("#break-length");
 const displayLengthAndSetTime = () => {
   sessionTime = sessionLength * 60;
   breakTime = breakLength * 60;
@@ -46,12 +44,13 @@ const displayLengthAndSetTime = () => {
   timeLeft.textContent = `${leadingZero(sessionLength)}:00`;
 };
 
-const upDown = document.querySelectorAll(".up-down-buttons");
-const sessionUp = document.querySelector("#session-increment");
-const sessionDown = document.querySelector("#session-decrement");
-const breakUp = document.querySelector("#break-increment");
-const breakDown = document.querySelector("#break-decrement");
+const hideEditLength = hideEdit => {
+  !hideEdit
+    ? upDown.forEach(e => e.classList.add("toggle-hide"))
+    : upDown.forEach(e => e.classList.remove("toggle-hide"));
+};
 
+// ------------------------ controls for changing session and break lengths
 const updateSession = up => {
   if (up) {
     sessionLength < 60 ? (sessionLength += 1) : (sessionLength = 60);
@@ -70,19 +69,12 @@ const updateBreak = up => {
   displayLengthAndSetTime();
 };
 
-const hideEditLength = hideEdit => {
-  !hideEdit
-    ? upDown.forEach(e => e.classList.add("toggle-hide"))
-    : upDown.forEach(e => e.classList.remove("toggle-hide"));
-};
-
 sessionUp.addEventListener("click", e => updateSession(true), false);
 sessionDown.addEventListener("click", e => updateSession(false), false);
 breakUp.addEventListener("click", e => updateBreak(true), false);
 breakDown.addEventListener("click", e => updateBreak(false), false);
 
 // ------------------------ run session and breaks functions
-const timeLeft = document.querySelector("#time-left");
 const runSession = () => {
   sessionOn = true;
   sessionTime = sessionTime - 1;
@@ -126,8 +118,6 @@ const runBreak = () => {
 };
 
 // ------------------------ pause/play event listeners buttons
-const play = document.querySelector(".fa-play-circle");
-const pause = document.querySelector(".fa-pause-circle");
 play.addEventListener(
   "click",
   e => {
@@ -139,17 +129,14 @@ play.addEventListener(
       pauseOn = false;
       breakOn = false;
       sessionInterval = setInterval(runSession, millisecs);
-      status();
     }
     if (pauseOn && sessionOn) {
       pauseOn = false;
       sessionInterval = setInterval(runSession, millisecs);
-      status();
     }
     if (pauseOn && breakOn) {
       pauseOn = false;
       sessionInterval = setInterval(runBreak, millisecs);
-      status();
     }
   },
   false
@@ -162,7 +149,6 @@ pause.addEventListener(
     pause.classList.toggle("toggle-hide");
     if ((sessionOn || breakOn) && !pauseOn) {
       pauseOn = true;
-      status();
       clearInterval(sessionInterval);
       clearInterval(breakInterval);
     }
@@ -186,7 +172,6 @@ const reset = () => {
   play.classList.remove("toggle-hide");
   pause.classList.add("toggle-hide");
 };
-const resetButton = document.querySelector("#reset");
 resetButton.addEventListener("click", e => reset());
 
 const start = () => {
